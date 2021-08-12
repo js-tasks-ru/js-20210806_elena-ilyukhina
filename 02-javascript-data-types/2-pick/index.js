@@ -6,10 +6,10 @@
  */
 export const pick = (obj, ...fields) => {
 
-  let result = {};
+  const result = {};
 
   for (const key in obj) {
-    if (fields.includes(key)) { // if (fields.indexOf(key) != -1)
+    if (fields.includes(key)) {
       result[key] = obj[key];
     }
   }
