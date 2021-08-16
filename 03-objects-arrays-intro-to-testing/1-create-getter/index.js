@@ -5,4 +5,15 @@
  */
 export function createGetter(path) {
 
+  return function(obj) {
+    const props = path.split(".");
+
+    let value = obj;
+    let index = 0;
+
+    while (value && index < props.length) {
+      value = value[props[index++]];
+    }
+    return value;
+  }
 }

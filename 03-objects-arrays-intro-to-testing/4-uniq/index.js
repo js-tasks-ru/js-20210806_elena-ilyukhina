@@ -4,5 +4,8 @@
  * @returns {*[]} - the new array with uniq values
  */
 export function uniq(arr) {
+  return [...new Set(arr)];
 
+  // Another solution:
+  // return (arr ?? []).filter((element, index, array) => array.indexOf(element) === index);
 }
