@@ -5,9 +5,9 @@
  */
 export function createGetter(path) {
 
-  return function(obj) {
-    const props = path.split(".");
+  const props = path.split(".");
 
+  return function(obj) {
     let value = obj;
     let index = 0;
 
