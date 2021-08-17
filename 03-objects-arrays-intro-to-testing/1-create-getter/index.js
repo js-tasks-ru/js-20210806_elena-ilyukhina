@@ -12,7 +12,7 @@ export function createGetter(path) {
     let index = 0;
 
     while (value !== undefined && index < props.length) {
-      value = value?.[props[index++]];
+      value = value[props[index++]];
     }
     return value;
   }
