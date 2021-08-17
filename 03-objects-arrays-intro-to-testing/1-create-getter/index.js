@@ -11,7 +11,7 @@ export function createGetter(path) {
     let value = obj;
     let index = 0;
 
-    while (value && index < props.length) {
+    while (value !== undefined && index < props.length) {
       value = value?.[props[index++]];
     }
     return value;
