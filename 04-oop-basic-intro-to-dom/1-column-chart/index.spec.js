@@ -88,19 +88,23 @@ describe('oop-basic-intro-to-dom/column-chart', () => {
   });
 
   it('should have ability to be updated by new "data" values (should re-render only body with charts columns)', () => {
-    const data = [10];
+    const data = [10, 100];
+    let columnProps = getColumnProps(data);
 
     columnChart = new ColumnChart({ data });
 
     const chart = columnChart.element.querySelector('.column-chart__chart');
 
-    const newData = [20];
-    const columnProps = getColumnProps(newData);
+    expect(getComputedStyle(chart.children[0]).getPropertyValue('--value')).toEqual(columnProps[0].value);
+    expect(chart.children[1].dataset.tooltip).toEqual(columnProps[1].percent);
+
+    const newData = [20, 80];
+    columnProps = getColumnProps(newData);
 
     columnChart.update(newData);
 
     expect(getComputedStyle(chart.children[0]).getPropertyValue('--value')).toEqual(columnProps[0].value);
-    expect(chart.children[0].dataset.tooltip).toEqual(columnProps[0].percent);
+    expect(chart.children[1].dataset.tooltip).toEqual(columnProps[1].percent);
   });
 
   it('should have loading indication if data wasn\'t passed ', () => {
