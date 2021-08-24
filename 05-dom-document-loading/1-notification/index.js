@@ -1,39 +1,37 @@
 export default class NotificationMessage {
 
-  static element = NotificationMessage.init();
-  static timeoutId = null;
+  static isRunning = false;
 
-  static init() {
-    NotificationMessage.element = document.createElement('div');
-    document.body.append(NotificationMessage.element);
-    return NotificationMessage.element;
-  }
-
-  constructor(
-    message = '', {
-      duration = 2000,
-      type = 'success'
-    }) {
-    this.message = message;
+  constructor(message = '', {duration = 0, type = ''} = {}) {
     this.duration = duration;
-    this.type = type;
-  }
-
-  show() {
-    if (NotificationMessage.timeoutId)
-      clearTimeout(NotificationMessage.timeoutId);
-
-    NotificationMessage.element.innerHTML = `
-        <div class="notification ${this.type}" style="--value:${this.duration / 1000}s">
+    this.element = document.createElement('div');
+    this.element.innerHTML = `
+        <div class="notification ${type}" style="--value:${this.duration / 1000}s">
             <div class="timer"></div>
             <div class="inner-wrapper">
-                <div class="notification-header">${this.type}</div>
-                <div class="notification-body">
-                    ${this.message}
-                </div>
+                <div class="notification-header">${type}</div>
+                <div class="notification-body">${message}</div>
             </div>
         </div>
     `;
-    NotificationMessage.timeoutId = setTimeout(() => NotificationMessage.element.innerHTML = ``, this.duration);
+    this.element = this.element.firstElementChild;
+  }
+
+  show(element = document.body) {
+    if (!NotificationMessage.isRunning) {
+      element.append(this.element);
+      NotificationMessage.isRunning = true;
+      setTimeout(this.remove.bind(this), this.duration)
+    }
+  }
+
+  remove() {
+    this.element.remove();
+    NotificationMessage.isRunning = false;
+  }
+
+  destroy() {
+    this.element.innerHTML = '';
+    this.element.remove();
   }
 }
