@@ -3,14 +3,20 @@ export default class NotificationMessage {
   static isRunning = false;
 
   constructor(message = '', {duration = 0, type = ''} = {}) {
+    this.message = message;
     this.duration = duration;
+    this.type = type;
+    this.render();
+  }
+
+  render() {
     this.element = document.createElement('div');
     this.element.innerHTML = `
-        <div class="notification ${type}" style="--value:${this.duration / 1000}s">
+        <div class="notification ${this.type}" style="--value:${this.duration / 1000}s">
             <div class="timer"></div>
             <div class="inner-wrapper">
-                <div class="notification-header">${type}</div>
-                <div class="notification-body">${message}</div>
+                <div class="notification-header">${this.type}</div>
+                <div class="notification-body">${this.message}</div>
             </div>
         </div>
     `;
@@ -21,7 +27,7 @@ export default class NotificationMessage {
     if (!NotificationMessage.isRunning) {
       element.append(this.element);
       NotificationMessage.isRunning = true;
-      setTimeout(this.remove.bind(this), this.duration)
+      setTimeout(() => {this.remove()}, this.duration)
     }
   }
 
@@ -31,7 +37,6 @@ export default class NotificationMessage {
   }
 
   destroy() {
-    this.element.innerHTML = '';
-    this.element.remove();
+    this.remove();
   }
 }

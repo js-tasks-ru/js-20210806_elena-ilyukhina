@@ -9,7 +9,7 @@ export default class SortableTable {
   constructor(headerConfig = [], {data = []}) {
     this.headerConfig = headerConfig;
     this.data = data;
-    this.sort();
+    this.render();
   }
 
   renderHeader(header) {
