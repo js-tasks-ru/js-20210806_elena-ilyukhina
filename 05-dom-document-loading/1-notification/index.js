@@ -1,6 +1,6 @@
 export default class NotificationMessage {
 
-  static isRunning = false;
+  static currentNotification = null;
 
   constructor(message = '', {duration = 0, type = ''} = {}) {
     this.message = message;
@@ -24,21 +24,25 @@ export default class NotificationMessage {
   }
 
   show(element = document.body) {
-    if (!NotificationMessage.isRunning) {
-      element.append(this.element);
-      NotificationMessage.isRunning = true;
-      setTimeout(() => {this.remove()}, this.duration)
+    if (NotificationMessage.currentNotification) {
+      NotificationMessage.currentNotification.remove();
     }
+
+    element.append(this.element);
+
+    this.timeoutId = setTimeout(() => {this.remove()}, this.duration)
+    NotificationMessage.currentNotification = this;
   }
 
   remove() {
     if (this.element)
       this.element.remove();
-    NotificationMessage.isRunning = false;
+    clearTimeout(this.timeoutId);
   }
 
   destroy() {
     this.remove();
     this.element = null;
+    NotificationMessage.currentNotification = null;
   }
 }
