@@ -1,10 +1,6 @@
 export default class SortableTable {
-
-  element = document.createElement('div');
-  subElements = {
-    header: document.createElement('div'),
-    body: document.createElement('div')
-  };
+  element;
+  subElements = {};
 
   constructor(headerConfig = [], {data = []}) {
     this.headerConfig = headerConfig;
@@ -12,69 +8,84 @@ export default class SortableTable {
     this.render();
   }
 
-  renderHeader(header) {
-    const sortArrow = `
-        <span data-element="arrow" class="sortable-table__sort-arrow">
-            <span class="sort-arrow"></span>
-        </span>
-    `;
-
+  getHeaderCell(column) {
     return `
-        <div class="sortable-table__cell" data-id="${header.id}" data-sortable="${header.sortable}">
-            <span>${header.title}</span>
-            ${header.sortType === 'string' ? sortArrow : ``}
+        <div class="sortable-table__cell" data-id="${column.id}" data-sortable="${column.sortable}">
+            <span>${column.title}</span>
+            <span data-element="arrow" class="sortable-table__sort-arrow">
+                <span class="sort-arrow"></span>
+            </span>
         </div>
     `;
   }
 
-  defaultTemplate(data) {
-    return `<div class="sortable-table__cell">${data}</div>`;
-  }
+  getDataRow(dataRow) {
+    const defaultTemplate = data => `<div class="sortable-table__cell">${data}</div>`;
 
-  renderDataRow(dataRow, index) {
     return `
         <a href="/products/${dataRow.id}" class="sortable-table__row">
-            ${this.headerConfig.map(header => (header.template ?? this.defaultTemplate)(dataRow[header.id])).join('')}
+            ${this.headerConfig.map(({id, template}) => (template ?? defaultTemplate)(dataRow[id])).join('')}
         </a>
     `;
   }
 
   render() {
-    // Header
-    this.subElements.header.innerHTML = `
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = this.getTable();
+    this.element = wrapper.firstElementChild;
+    this.subElements = this.getSubElements(this.element);
+  }
+
+  getTable() {
+    return `
+        <div class="sortable-table">
+            ${this.getTableHeader()}
+            ${this.getTableBody()}
+        </div>
+    `;
+  }
+
+  getTableHeader() {
+    return `
         <div data-element="header" class="sortable-table__header sortable-table__row">
-            ${this.headerConfig.map(header => this.renderHeader(header)).join('')}
+            ${this.headerConfig.map(column => this.getHeaderCell(column)).join('')}
         </div>
     `;
+  }
 
-    // Body
-    this.subElements.body.innerHTML = `
+  getTableBody() {
+    return `
         <div data-element="body" class="sortable-table__body">
-            ${this.data.map((dataRow, index) => this.renderDataRow(dataRow, index)).join('')}
+            ${this.getTableRows(this.data)}
         </div>
     `;
+  }
 
-    // Table
-    this.element.innerHTML = `
-        <div data-element="productsContainer" class="products-list__container">
-            <div class="sortable-table">
-                ${this.subElements.header.innerHTML}
-                ${this.subElements.body.innerHTML}
-            </div>
-        </div>
-    `;
+  getTableRows(data) {
+    return data.map(dataRow => this.getDataRow(dataRow)).join('');
+  }
 
-    this.subElements.header = this.subElements.header.firstElementChild;
-    this.subElements.body = this.subElements.body.firstElementChild;
-    this.element = this.element.firstElementChild;
+  getSubElements(element) {
+    const result = {};
+    for (const subElement of element.querySelectorAll('[data-element]')) {
+      result[subElement.dataset.element] = subElement;
+    }
+    return result;
+  }
+
+  remove() {
+    if (this.element) {
+      this.element.remove();
+    }
   }
 
   destroy() {
-    this.element.innerHTML = '';
-    this.element.remove();
+    this.remove();
+    this.element = null;
+    this.subElements = {};
   }
 
-  sort(fieldValue = 'title', orderValue) {
+  sort(fieldValue, orderValue) {
     const sortFunction = {
       string: (value1, value2) => value1.localeCompare(value2, ['ru', 'en'], {caseFirst: 'upper'}),
       number: (value1, value2) => value1 - value2
@@ -85,10 +96,12 @@ export default class SortableTable {
       desc: -1
     };
 
-    const sortType = this.headerConfig.find(header => header.id === fieldValue).sortType;
-
-    this.data.sort((value1, value2) => sortOrder[orderValue] * sortFunction[sortType](value1[fieldValue], value2[fieldValue]));
-    this.render();
+    const sortType = this.headerConfig.find(({id}) => (id === fieldValue)).sortType;
+    const sortedData = [...this.data].sort(
+      (value1, value2) =>
+        sortOrder[orderValue] * sortFunction[sortType](value1[fieldValue], value2[fieldValue])
+    );
+    this.subElements.body.innerHTML = this.getTableRows(sortedData);
   }
 }
 

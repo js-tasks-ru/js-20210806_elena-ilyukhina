@@ -10,8 +10,8 @@ export default class NotificationMessage {
   }
 
   render() {
-    this.element = document.createElement('div');
-    this.element.innerHTML = `
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
         <div class="notification ${this.type}" style="--value:${this.duration / 1000}s">
             <div class="timer"></div>
             <div class="inner-wrapper">
@@ -20,7 +20,7 @@ export default class NotificationMessage {
             </div>
         </div>
     `;
-    this.element = this.element.firstElementChild;
+    this.element = wrapper.firstElementChild;
   }
 
   show(element = document.body) {
@@ -32,11 +32,13 @@ export default class NotificationMessage {
   }
 
   remove() {
-    this.element.remove();
+    if (this.element)
+      this.element.remove();
     NotificationMessage.isRunning = false;
   }
 
   destroy() {
     this.remove();
+    this.element = null;
   }
 }
