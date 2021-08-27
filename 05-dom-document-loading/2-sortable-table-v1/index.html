@@ -69,7 +69,7 @@
     },
   ];
 
-  const sortableTable = new SortableTable(headerConfig, data);
+  const sortableTable = new SortableTable(headerConfig, {data}); // changed from data to {data} to match tests
 
   root.append(sortableTable.element);
 
