@@ -34,7 +34,8 @@
       id: 'quantity',
       title: 'Quantity',
       sortable: true,
-      sortType: 'number'
+      sortType: 'custom',
+      sortFunction: (value1, value2) => value2 - value1
     },
     {
       id: 'price',
