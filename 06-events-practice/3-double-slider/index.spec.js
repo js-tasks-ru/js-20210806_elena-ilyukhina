@@ -11,7 +11,9 @@ describe('events-practice/double-slider', () => {
         top: 0,
         left: 0,
         bottom: 0,
-        right: 0,
+        // changed from 0 to 1000 to reflect the actual size of the bounding rectangle
+        // use it to calculate a new position of the slider, not sure how to handle 0 there
+        right: 1000,
       };
     });
 
