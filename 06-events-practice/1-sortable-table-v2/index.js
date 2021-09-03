@@ -134,7 +134,7 @@ export default class SortableTable {
   }
 
   sort () {
-    if (this.isSortLocally) {
+    if (this.sortLocally) {
       this.sortOnClient();
     } else {
       this.sortOnServer();

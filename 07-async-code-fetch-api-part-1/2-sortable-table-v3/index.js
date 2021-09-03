@@ -23,7 +23,7 @@ export default class SortableTable {
     this.start = 0;
     this.end = this.pageSize;
     this.render()
-      .catch(reason => console.log(reason));
+      .catch(reason => console.error(reason));
   }
 
   sortOnClient(id, order) {
@@ -36,7 +36,7 @@ export default class SortableTable {
 
     this.loadData()
       .then(result => this.updateTable(id, order, result))
-      .catch(reason => console.log(reason));
+      .catch(reason => console.error(reason));
   }
 
   initEventListeners() {
@@ -221,7 +221,7 @@ export default class SortableTable {
             this.updateBody(result, true);
           }
         })
-        .catch(reason => console.log(reason));
+        .catch(reason => console.error(reason));
     }
   }
 
