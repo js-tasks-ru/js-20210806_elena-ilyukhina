@@ -5,6 +5,7 @@ const BACKEND_URL = 'https://course-js.javascript.ru';
 export default class SortableTable {
   element;
   subElements = {};
+  data = [];
   pageSize = 30;
 
   constructor(headerConfig = [], {
@@ -19,11 +20,15 @@ export default class SortableTable {
     this.url = new URL(url, BACKEND_URL);
     this.sorted = sorted;
     this.isSortLocally = isSortLocally;
-    this.data = [];
-    this.start = 0;
-    this.end = this.pageSize;
+
+    this.setRange(0, this.pageSize);
     this.render()
-      .catch(reason => console.error(reason));
+      .catch(error => console.error(error.message));
+  }
+
+  setRange(start, end) {
+    this.start = start;
+    this.end = end;
   }
 
   sortOnClient(id, order) {
@@ -31,12 +36,11 @@ export default class SortableTable {
   }
 
   sortOnServer(id, order) {
-    this.start = 0;
-    this.end = this.pageSize;
+    this.setRange(0, this.pageSize);
 
     this.loadData()
       .then(result => this.updateTable(id, order, result))
-      .catch(reason => console.error(reason));
+      .catch(error => console.error(error.message));
   }
 
   initEventListeners() {
@@ -210,18 +214,19 @@ export default class SortableTable {
   }
 
   onScroll = (event) => {
-    if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
-      this.start = this.data.length;
-      this.end = this.start + this.pageSize;
+    if (!this.isRunning && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
+      this.isRunning = true;
+      this.setRange(this.data.length, this.data.length + this.pageSize);
 
       this.loadData()
         .then(result => {
-          if (result.length) {
+          if (result && result.length) {
             this.data = this.data.concat(result);
             this.updateBody(result, true);
           }
         })
-        .catch(reason => console.error(reason));
+        .catch(error => console.error(error.message))
+        .finally(() => this.isRunning = false);
     }
   }
 

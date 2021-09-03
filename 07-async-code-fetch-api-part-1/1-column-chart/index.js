@@ -5,6 +5,8 @@ const BACKEND_URL = 'https://course-js.javascript.ru';
 export default class ColumnChart {
   element;
   subElements = {};
+  data = {};
+  chartHeight = 50;
 
   constructor({
     url = '',
@@ -16,15 +18,14 @@ export default class ColumnChart {
     link = '#',
     formatHeading = data => data
   } = {}) {
-    this.url = url;
+    this.url = new URL(url, BACKEND_URL);
     this.range = range;
     this.label = label;
     this.link = link;
-    this.data = {};
-    this.value = 0;
-    this.chartHeight = 50;
     this.formatHeading = formatHeading;
+
     this.render();
+    this.update(this.range.from, this.range.to);
   }
 
   render() {
@@ -37,8 +38,10 @@ export default class ColumnChart {
                 <a href="${this.link}" class="column-chart__link">View all</a>
             </div>
             <div class="column-chart__container">
-                <div data-element="header" class="column-chart__header">${this.formatHeading(this.value)}</div>
-                <div data-element="body" class="column-chart__chart"></div>
+                <div data-element="header" class="column-chart__header">${this.formatHeading(this.calculateValue())}</div>
+                <div data-element="body" class="column-chart__chart">
+                    ${this.getChartColumns()}
+                </div>
             </div>
         </div>
     `;
@@ -63,27 +66,26 @@ export default class ColumnChart {
     return result;
   }
 
-  getUrl(from, to) {
-    const url = new URL(this.url, BACKEND_URL);
-    url.searchParams.set('from', from.toISOString());
-    url.searchParams.set('to', to.toISOString());
-    return url;
+  buildUrl() {
+    this.url.searchParams.set('from', this.range.from.toISOString());
+    this.url.searchParams.set('to', this.range.to.toISOString());
+    return this.url;
   }
 
   async update(from, to) {
+    this.range = {from, to};
+
     this.setLoading(true);
-
-    this.data = await fetchJson(this.getUrl(from, to));
-
+    this.data = await fetchJson(this.buildUrl());
     this.setLoading(false);
+
     this.updateChart();
 
     return this.data;
   }
 
   updateChart() {
-    this.value = this.calculateValue();
-    this.subElements.header.textContent = this.formatHeading(this.value);
+    this.subElements.header.textContent = this.formatHeading(this.calculateValue());
     this.subElements.body.innerHTML = this.getChartColumns();
   }
 
