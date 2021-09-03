@@ -16,23 +16,23 @@ export default class SortableTable {
   }
 
   initEventListeners() {
-    const sortableColumns = this.subElements.header.querySelectorAll('[data-sortable="true"]');
-
-    for (const element of sortableColumns) {
-      element.addEventListener('pointerdown', this.onPointerDown)
-    }
+    this.subElements.header.addEventListener('pointerdown', this.onPointerDown);
   }
 
   onPointerDown = (event) => {
-    const element = event.currentTarget;
+    const column = event.target.closest('.sortable-table__cell[data-sortable="true"]');
+
+    if (!column) {
+      return;
+    }
 
     const toggle = {
       asc: 'desc',
       desc: 'asc'
     };
 
-    this.sorted.id = element.dataset.id;
-    this.sorted.order = toggle[element.dataset.order];
+    this.sorted.id = column.dataset.id;
+    this.sorted.order = toggle[column.dataset.order];
 
     this.sort();
   }
