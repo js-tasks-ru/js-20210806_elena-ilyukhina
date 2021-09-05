@@ -9,7 +9,7 @@ export default async function(url, params) {
     // TODO: "toString" call needed for correct work of "jest-fetch-mock"
     response = await fetch(url.toString(), params);
   } catch (err) {
-    throw new FetchError(response, 'Network error has occurred.');
+    throw new FetchError(response, null, err.message); //'Network error has occurred.');
   }
 
   let body;
