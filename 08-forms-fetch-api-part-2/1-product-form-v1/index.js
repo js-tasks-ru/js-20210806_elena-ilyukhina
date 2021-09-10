@@ -12,7 +12,16 @@ export default class ProductForm {
 
   constructor(productId) {
     this.productId = productId;
-    this.imageList = [];
+    this.defaultData = {
+      title: '',
+      description: '',
+      subcategory: '',
+      price: 0,
+      quantity: 0,
+      discount: 0,
+      status: 0,
+      images: []
+    };
   }
 
   async loadCategories() {
@@ -34,48 +43,22 @@ export default class ProductForm {
     this.element = wrapper.firstElementChild;
     this.subElements = this.getSubElements(this.element);
 
-    let results = [];
-    let categories;
-    let product;
+    const promises = [
+      this.loadCategories(),
+      this.productId ? this.loadProduct(this.productId) : Promise.resolve([this.defaultData])
+    ];
 
     try {
-      results = await Promise.allSettled([this.loadCategories(), this.loadProduct(this.productId)]);
+      const [categories, products] = await Promise.all(promises);
+      const [product] = products;
 
-      results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          switch (index) {
-          case 0:
-            categories = result.value;
-            break;
-          case 1:
-            [product] = result.value;
-            break;
-          }
-        } else {
-          console.error(result.reason);
-        }
-      });
+      this.setProductData(product);
+
+      this.subElements.productForm.elements.subcategory.innerHTML = this.getCategories(categories);
+      this.subElements.imageListContainer.innerHTML = this.getProductImages(product.images);
+
     } catch (error) {
       console.error(error.message);
-    }
-
-    // populate product categories
-    if (categories) {
-      this.subElements.productForm.elements.subcategory.innerHTML = this.getCategories(categories);
-    }
-
-    // set form values
-    if (product) {
-      this.subElements.productForm.elements.title.value = product.title;
-      this.subElements.productForm.elements.description.value = product.description;
-      this.subElements.productForm.elements.subcategory.value = product.subcategory;
-      this.subElements.productForm.elements.price.value = product.price;
-      this.subElements.productForm.elements.quantity.value = product.quantity;
-      this.subElements.productForm.elements.discount.value = product.discount;
-      this.subElements.productForm.elements.status.value = product.status;
-
-      this.imageList = product.images;
-      this.subElements.imageListContainer.innerHTML = this.getProductImages(this.imageList);
     }
 
     this.initEventListeners();
@@ -85,40 +68,28 @@ export default class ProductForm {
 
   onSubmit = (event) => {
     event.preventDefault();
-    this.save();
+
+    this.save()
+      .then(() => console.log('Product saved!'))
+      .catch(error => console.error(error.message));
   }
 
   async save() {
-    let response;
-    let method;
-    let eventType;
+    const [method, eventType] = this.productId ? ['PATCH', 'product-updated'] : ['PUT', 'product-saved'];
 
-    if (this.productId) {
-      method = 'PATCH';
-      eventType = 'product-updated';
-    } else {
-      method = 'PUT';
-      eventType = 'product-saved';
-    }
+    const response = await fetchJson(this.productsUrl, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(this.getProductData())
+    });
 
-    try {
-      response = await fetchJson(this.productsUrl, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(this.getProduct())
-      });
-
-      this.element.dispatchEvent(new CustomEvent(eventType, {
-        detail: {
-          response: response
-        }
-      }));
-
-    } catch (error) {
-      console.error(error.message);
-    }
+    this.element.dispatchEvent(new CustomEvent(eventType, {
+      detail: {
+        response: response
+      }
+    }));
   }
 
   initEventListeners() {
@@ -249,14 +220,16 @@ export default class ProductForm {
   }
 
   onChange = (event) => {
-    const file = event.target.files[0];
+    const [file] = event.target.files;
 
     if (!file) {
       return;
     }
 
-    this.subElements.productForm.elements.uploadImage.classList.add('is-loading');
-    this.subElements.productForm.elements.uploadImage.disabled = true;
+    const uploadImage = this.subElements.productForm.elements.uploadImage;
+
+    uploadImage.classList.add('is-loading');
+    uploadImage.disabled = true;
 
     const formData = new FormData();
     formData.append('image', file);
@@ -275,12 +248,12 @@ export default class ProductForm {
       })
       .catch(error => console.error(error.message))
       .finally(() => {
-        this.subElements.productForm.uploadImage.classList.remove("is-loading");
-        this.subElements.productForm.uploadImage.disabled = false;
+        uploadImage.classList.remove("is-loading");
+        uploadImage.disabled = false;
       });
   }
 
-  getProduct() {
+  getProductData() {
     const elements = this.subElements.productForm.elements;
 
     const product = {
@@ -299,6 +272,20 @@ export default class ProductForm {
     }
 
     return product;
+  }
+
+  setProductData(product) {
+    const elements = this.subElements.productForm.elements;
+
+    elements.title.value = product.title;
+    elements.description.value = product.description;
+    elements.subcategory.value = product.subcategory;
+    elements.price.value = product.price;
+    elements.quantity.value = product.quantity;
+    elements.discount.value = product.discount;
+    elements.status.value = product.status;
+
+    this.imageList = product.images;
   }
 
   remove() {
