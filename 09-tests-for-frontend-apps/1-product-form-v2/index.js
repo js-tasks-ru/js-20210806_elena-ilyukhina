@@ -8,8 +8,66 @@ const BACKEND_URL = 'https://course-js.javascript.ru';
 export default class ProductForm {
   element;
   subElements = {};
-  productsUrl = new URL('api/rest/products', BACKEND_URL);
-  categoriesUrl = new URL('api/rest/categories', BACKEND_URL);
+  productsUrl = 'api/rest/products';
+  categoriesUrl = 'api/rest/categories';
+
+  uploadImage = () => {
+    let fileInput = document.getElementById('imageUpload');
+
+    if (!fileInput) {
+      fileInput = document.createElement('input');
+      fileInput.id = 'imageUpload';
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.hidden = true;
+      fileInput.addEventListener('change', this.onChange);
+      document.body.append(fileInput);
+    }
+
+    fileInput.click();
+  }
+
+  onChange = (event) => {
+    const [file] = event.target.files;
+
+    if (!file) {
+      return;
+    }
+
+    const uploadImage = this.subElements.productForm.elements.uploadImage;
+
+    uploadImage.classList.add('is-loading');
+    uploadImage.disabled = true;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    fetchJson('https://api.imgur.com/3/image', {
+      method: 'POST',
+      headers: {
+        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`
+      },
+      body: formData,
+      referrer: ''
+    })
+      .then(response => {
+        this.imageList.push({url: response.data.link, source: file.name});
+        this.subElements.imageListContainer.replaceChildren(this.createSortableImageList(this.imageList));
+      })
+      .catch(error => console.error(error.message))
+      .finally(() => {
+        uploadImage.classList.remove("is-loading");
+        uploadImage.disabled = false;
+      });
+  }
+
+  onSubmit = (event) => {
+    event.preventDefault();
+
+    this.save()
+      .then(() => console.log('Product saved!'))
+      .catch(error => console.error(error.message));
+  }
 
   constructor(productId) {
     this.productId = productId;
@@ -26,14 +84,14 @@ export default class ProductForm {
   }
 
   async loadCategories() {
-    const url = new URL(this.categoriesUrl.toString());
+    const url = new URL(this.categoriesUrl, BACKEND_URL);
     url.searchParams.set('_sort', 'weight');
     url.searchParams.set('_refs', 'subcategory');
     return await fetchJson(url);
   }
 
   async loadProduct(id) {
-    const url = new URL(this.productsUrl.toString());
+    const url = new URL(this.productsUrl, BACKEND_URL);
     url.searchParams.set('id', id);
     return await fetchJson(url);
   }
@@ -65,14 +123,6 @@ export default class ProductForm {
     this.initEventListeners();
 
     return this.element;
-  }
-
-  onSubmit = (event) => {
-    event.preventDefault();
-
-    this.save()
-      .then(() => console.log('Product saved!'))
-      .catch(error => console.error(error.message));
   }
 
   async save() {
@@ -196,56 +246,6 @@ export default class ProductForm {
       result[subElement.dataset.element] = subElement;
     }
     return result;
-  }
-
-  uploadImage = (event) => {
-    let fileInput = document.getElementById('imageUpload');
-
-    if (!fileInput) {
-      fileInput = document.createElement('input');
-      fileInput.id = 'imageUpload';
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.hidden = true;
-      fileInput.addEventListener('change', this.onChange);
-      document.body.append(fileInput);
-    }
-
-    fileInput.click();
-  }
-
-  onChange = (event) => {
-    const [file] = event.target.files;
-
-    if (!file) {
-      return;
-    }
-
-    const uploadImage = this.subElements.productForm.elements.uploadImage;
-
-    uploadImage.classList.add('is-loading');
-    uploadImage.disabled = true;
-
-    const formData = new FormData();
-    formData.append('image', file);
-
-    fetchJson('https://api.imgur.com/3/image', {
-      method: 'POST',
-      headers: {
-        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`
-      },
-      body: formData,
-      referrer: ''
-    })
-      .then(response => {
-        this.imageList.push({url: response.data.link, source: file.name});
-        this.subElements.imageListContainer.replaceChildren(this.createSortableImageList(this.imageList));
-      })
-      .catch(error => console.error(error.message))
-      .finally(() => {
-        uploadImage.classList.remove("is-loading");
-        uploadImage.disabled = false;
-      });
   }
 
   getProductData() {
